@@ -393,18 +393,18 @@ class ShippingOptionsView(View):
 
         # Create a shipping address instance using the data passed back
         country_code = self.request.POST.get(
-            'PAYMENTREQUEST_0_SHIPTOCOUNTRY', None)
+            'SHIPTOCOUNTRY', None)
         try:
             country = Country.objects.get(iso_3166_1_a2=country_code)
         except Country.DoesNotExist:
             country = Country()
 
         shipping_address = ShippingAddress(
-            line1=self.request.POST.get('PAYMENTREQUEST_0_SHIPTOSTREET', None),
-            line2=self.request.POST.get('PAYMENTREQUEST_0_SHIPTOSTREET2', None),
-            line4=self.request.POST.get('PAYMENTREQUEST_0_SHIPTOCITY', None),
-            state=self.request.POST.get('PAYMENTREQUEST_0_SHIPTOSTATE', None),
-            postcode=self.request.POST.get('PAYMENTREQUEST_0_SHIPTOZIP', None),
+            line1=self.request.POST.get('SHIPTOSTREET', None),
+            line2=self.request.POST.get('SHIPTOSTREET2', None),
+            line4=self.request.POST.get('SHIPTOCITY', None),
+            state=self.request.POST.get('SHIPTOSTATE', None),
+            postcode=self.request.POST.get('SHIPTOZIP', None),
             country=country
         )
         methods = self.get_shipping_methods(user, basket, shipping_address)
@@ -427,7 +427,7 @@ class ShippingOptionsView(View):
             pairs.append(('L_SHIPPINGOPTIONNAME%d' % index,
                           six.text_type(method.name)))
             pairs.append(('L_SHIPPINGOPTIONLABEL%d' % index,
-                          six.text_type(method.name)))
+                          six.text_type(method.description)))
             pairs.append(('L_SHIPPINGOPTIONAMOUNT%d' % index, charge))
             # For now, we assume tax and insurance to be zero
             pairs.append(('L_TAXAMT%d' % index, D('0.00')))
@@ -437,11 +437,12 @@ class ShippingOptionsView(View):
         else:
             # No shipping methods available - we flag this up to PayPal indicating that we
             # do not ship to the shipping address.
-            pairs.append(('NO_SHIPPING_OPTION_DETAILS', 1))
+            pairs.append(('NO_SHIPPING_OPTION_DETAILS', 0))
         payload = urlencode(pairs)
         return HttpResponse(payload)
 
     def get_shipping_methods(self, user, basket, shipping_address):
         repo = Repository()
-        return repo.get_shipping_methods(
+        logger.info(shipping_address)
+        return repo.get_available_shipping_methods(
             user, basket, shipping_addr=shipping_address)

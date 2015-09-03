@@ -333,6 +333,8 @@ def set_txn(basket, shipping_methods, currency, return_url, cancel_url, update_u
         params['PAYMENTREQUEST_0_SHIPPINGAMT'] = _format_currency(charge)
         params['PAYMENTREQUEST_0_AMT'] += charge
 
+    # set the max charge artificially high so the callback works!
+    max_charge = amount
     # Both the old version (MAXAMT) and the new version (PAYMENT...) are needed
     # here - think it's a problem with the API.
     params['PAYMENTREQUEST_0_MAXAMT'] = _format_currency(amount + max_charge)
